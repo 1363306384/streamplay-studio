@@ -19,6 +19,8 @@ jobs:
           cat > release-notes.md <<'EOF'
           Streamplay Studio 是面向 TikTok LIVE 团播与互动直播的桌面管理工具，用于集中管理直播流程、礼物与积分、PK 互动、画面叠加及直播状态。
 
+          Streamplay Studio is a desktop management tool for TikTok LIVE group and interactive broadcasts. It brings live workflows, gifts and scores, PK interactions, visual overlays, and stream status together in one place.
+
           ## 下载与安装
 
           | 系统 | 安装包 | 安装方式 |
