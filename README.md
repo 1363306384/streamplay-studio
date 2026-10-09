@@ -21,7 +21,7 @@ This repository distributes releases and does not contain the application source
 
 The [Build and publish Windows update](https://github.com/1363306384/streamplay-studio/actions/workflows/build-and-publish-windows.yml) workflow builds the private Studio source on a Windows runner and publishes the x64 installer, `latest.yml`, and blockmap to this repository's Releases.
 
-Before the first run, the repository owner must add an Actions repository secret named `STUDIO_SOURCE_READ_TOKEN`. It must be a fine-grained GitHub token with **Contents: Read-only** access to `hannansatopay/Three-Studios-Streaming-Platform`. Create and enter the token directly in GitHub; do not put it in this repository or send it in a message. The account creating the token must already be allowed to read that private source repository.
+Before the first run, the owner of `hannansatopay/Three-Studios-Streaming-Platform` must create a fine-grained GitHub token scoped to that repository with **Contents: Read-only** access. Save it as an Actions repository secret named `STUDIO_SOURCE_READ_TOKEN` in this release repository. Enter the token directly in GitHub; do not put it in this repository or send it in a message. GitHub currently does not support using a fine-grained personal access token as an outside collaborator to access another personal account's repository.
 
 To publish, first increase the `version` in the private Studio source repository above the version already released here. Then open the workflow, choose **Run workflow**, and enter the source branch, tag, or commit to build (default: `beta`). The workflow refuses to replace an existing version.
 
