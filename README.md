@@ -26,3 +26,9 @@ Before the first run, the owner of `hannansatopay/Three-Studios-Streaming-Platfo
 To publish, first increase the `version` in the private Studio source repository above the version already released here. Then open the workflow, choose **Run workflow**, and enter the source branch, tag, or commit to build (default: `beta`). The workflow refuses to replace an existing version.
 
 The v2.9.5 installers predate this workflow. Existing installed apps still check their original update server. Install a new GitHub-backed version once to switch them to this Releases feed; later versions can update through the app's **Restart And Install** button.
+
+## Publish an unsigned macOS DMG
+
+Without an Apple Developer signing certificate, the [Build unsigned macOS installer](https://github.com/1363306384/streamplay-studio/actions/workflows/build-and-publish-macos-unsigned.yml) workflow follows the source repository's `desktop:dist:mac:local` command. It builds an Apple Silicon DMG and adds it to an existing release of the same source version. Run the Windows release workflow first to create that release. It uses the same `STUDIO_SOURCE_READ_TOKEN` secret and will not replace an existing DMG.
+
+This DMG is unsigned and unnotarized. It is for manual download and installation only; it does not provide macOS in-app automatic updates. A signed, notarized build plus a ZIP and `latest-mac.yml` are required before enabling that feature.

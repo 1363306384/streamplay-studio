@@ -1,0 +1,88 @@
+name: Build unsigned macOS installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Studio source branch, tag, or commit
+        required: true
+        default: beta
+
+permissions:
+  contents: write
+
+concurrency:
+  group: streamplay-macos-release
+  cancel-in-progress: false
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Check out release workflow
+        uses: actions/checkout@v4
+
+      - name: Check out private Studio source
+        uses: actions/checkout@v4
+        with:
+          repository: hannansatopay/Three-Studios-Streaming-Platform
+          ref: ${{ inputs.source_ref }}
+          token: ${{ secrets.STUDIO_SOURCE_READ_TOKEN }}
+          path: studio-src
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: studio-src/package-lock.json
+
+      - name: Prepare packaged app
+        run: node scripts/prepare-studio-build.mjs
+
+      - name: Check release version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./studio-src/package.json').version")"
+          tag="v${version}"
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -E '\.dmg$'; then
+            echo "macOS DMG already exists for ${tag}." >&2
+            exit 1
+          fi
+          echo "STUDIO_VERSION=$version" >> "$GITHUB_ENV"
+          echo "STUDIO_TAG=$tag" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        working-directory: studio-src
+        run: npm ci
+
+      - name: Build unsigned Apple Silicon DMG
+        working-directory: studio-src
+        run: npm run desktop:dist:mac:local
+
+      - name: Verify DMG
+        run: |
+          set -euo pipefail
+          dmg="studio-src/dist-electron/Streamplay Studio-${STUDIO_VERSION}-Apple-Silicon.dmg"
+          test -s "$dmg"
+          hdiutil verify "$dmg"
+
+      - name: Upload DMG to existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          dmg="studio-src/dist-electron/Streamplay Studio-${STUDIO_VERSION}-Apple-Silicon.dmg"
+          gh release upload "$STUDIO_TAG" "$dmg" --repo "$GITHUB_REPOSITORY"
+
+      - name: Save DMG for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamplay-studio-macos-unsigned-${{ github.run_number }}
+          path: studio-src/dist-electron/*.dmg
+          if-no-files-found: ignore

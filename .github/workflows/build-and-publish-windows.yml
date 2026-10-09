@@ -39,7 +39,7 @@ jobs:
           cache-dependency-path: studio-src/package-lock.json
 
       - name: Point packaged updater to this release repository
-        run: node scripts/prepare-windows-build.mjs
+        run: node scripts/prepare-studio-build.mjs
 
       - name: Check release version
         shell: pwsh
