@@ -9,6 +9,13 @@ if (packageJson.name !== 'streamplay-studio' || !packageJson.build) {
   throw new Error('Unexpected Studio package configuration.');
 }
 
+if (process.env.STUDIO_RELEASE_VERSION) {
+  if (!/^\d+\.\d+\.\d+$/.test(process.env.STUDIO_RELEASE_VERSION)) {
+    throw new Error('STUDIO_RELEASE_VERSION must be a stable x.y.z version.');
+  }
+  packageJson.version = process.env.STUDIO_RELEASE_VERSION;
+}
+
 packageJson.build.publish = [{
   provider: 'github',
   owner: '1363306384',

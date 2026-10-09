@@ -19,6 +19,8 @@ This repository distributes releases and does not contain the application source
 
 ## Publish a Windows update
 
+The [Auto publish Studio beta](https://github.com/1363306384/streamplay-studio/actions/workflows/auto-publish-beta.yml) workflow checks the private source repository's `beta` branch every 15 minutes. When its commit changes, it builds Windows x64 and unsigned macOS Apple Silicon installers from that exact commit, then publishes both to one GitHub Release. It uses `STUDIO_SOURCE_READ_TOKEN`. If the source version is newer than the latest release, that version is used; otherwise the workflow increases the latest patch version for the release build. An unchanged commit is skipped. GitHub scheduled runs may start later than their nominal time.
+
 The [Build and publish Windows update](https://github.com/1363306384/streamplay-studio/actions/workflows/build-and-publish-windows.yml) workflow builds the private Studio source on a Windows runner and publishes the x64 installer, `latest.yml`, and blockmap to this repository's Releases.
 
 Before the first run, the owner of `hannansatopay/Three-Studios-Streaming-Platform` must create a fine-grained GitHub token scoped to that repository with **Contents: Read-only** access. Save it as an Actions repository secret named `STUDIO_SOURCE_READ_TOKEN` in this release repository. Enter the token directly in GitHub; do not put it in this repository or send it in a message. GitHub currently does not support using a fine-grained personal access token as an outside collaborator to access another personal account's repository.

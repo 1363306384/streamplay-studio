@@ -1,0 +1,176 @@
+name: Auto publish Studio beta
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: streamplay-auto-beta-release
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.version.outputs.changed }}
+      source_sha: ${{ steps.version.outputs.source_sha }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out private beta source
+        uses: actions/checkout@v4
+        with:
+          repository: hannansatopay/Three-Studios-Streaming-Platform
+          ref: beta
+          token: ${{ secrets.STUDIO_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Find new source commit and release version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          source_sha="$(git rev-parse HEAD)"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          # Baseline: beta at the time automatic publishing was enabled.
+          if [[ "$source_sha" == '261f84ab52dd9eda6ae6c6d69287c008b345cf82' ]]; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          release_json="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName,body)"
+          previous_sha="$(node -e 'const d=JSON.parse(process.argv[1]); console.log(d.body.match(/Source commit: ([a-f0-9]{40})/)?.[1] ?? "")' "$release_json")"
+          if [[ "$source_sha" == "$previous_sha" ]]; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          source_version="$(node -p 'require("./package.json").version')"
+          latest_version="$(node -e 'console.log(JSON.parse(process.argv[1]).tagName.replace(/^v/, ""))' "$release_json")"
+          next_version="$(node -e '
+            const parse = (v) => { if (!/^\d+\.\d+\.\d+$/.test(v)) throw new Error(`Unsupported version: ${v}`); return v.split(".").map(Number); };
+            const source = parse(process.argv[1]); const latest = parse(process.argv[2]);
+            const newer = source.findIndex((part, i) => part !== latest[i]);
+            console.log(newer >= 0 && source[newer] > latest[newer] ? source.join(".") : `${latest[0]}.${latest[1]}.${latest[2] + 1}`);
+          ' "$source_version" "$latest_version")"
+          echo "version=$next_version" >> "$GITHUB_OUTPUT"
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+
+  windows:
+    needs: detect
+    if: needs.detect.outputs.changed == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: hannansatopay/Three-Studios-Streaming-Platform
+          ref: ${{ needs.detect.outputs.source_sha }}
+          token: ${{ secrets.STUDIO_SOURCE_READ_TOKEN }}
+          path: studio-src
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: studio-src/package-lock.json
+      - name: Prepare release configuration
+        env:
+          STUDIO_RELEASE_VERSION: ${{ needs.detect.outputs.version }}
+        run: node scripts/prepare-studio-build.mjs
+      - name: Install dependencies and build
+        working-directory: studio-src
+        run: npm ci && npm run desktop:dist:win
+      - name: Verify Windows update assets
+        shell: pwsh
+        env:
+          STUDIO_RELEASE_VERSION: ${{ needs.detect.outputs.version }}
+        run: |
+          $dir = 'studio-src/dist-electron'
+          $exe = "Streamplay Studio-Setup-$env:STUDIO_RELEASE_VERSION-x64.exe"
+          if (-not (Test-Path "$dir/$exe") -or -not (Test-Path "$dir/latest.yml")) { throw 'Installer or latest.yml missing.' }
+          if (-not (Get-Content "$dir/latest.yml" -Raw).Contains($exe)) { throw 'Update metadata does not reference installer.' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: studio-src/dist-electron/*
+          if-no-files-found: error
+
+  macos:
+    needs: detect
+    if: needs.detect.outputs.changed == 'true'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: hannansatopay/Three-Studios-Streaming-Platform
+          ref: ${{ needs.detect.outputs.source_sha }}
+          token: ${{ secrets.STUDIO_SOURCE_READ_TOKEN }}
+          path: studio-src
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: studio-src/package-lock.json
+      - name: Prepare release configuration
+        env:
+          STUDIO_RELEASE_VERSION: ${{ needs.detect.outputs.version }}
+        run: node scripts/prepare-studio-build.mjs
+      - name: Install dependencies and build unsigned DMG
+        working-directory: studio-src
+        run: npm ci && npm run desktop:dist:mac:local
+      - name: Verify DMG
+        env:
+          STUDIO_RELEASE_VERSION: ${{ needs.detect.outputs.version }}
+        run: |
+          set -euo pipefail
+          dmg="studio-src/dist-electron/Streamplay Studio-${STUDIO_RELEASE_VERSION}-Apple-Silicon.dmg"
+          test -s "$dmg"
+          hdiutil verify "$dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: studio-src/dist-electron/*.dmg
+          if-no-files-found: error
+
+  publish:
+    needs: [detect, windows, macos]
+    if: needs.detect.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: release/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-release
+          path: release/macos
+      - name: Publish verified installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STUDIO_RELEASE_VERSION: ${{ needs.detect.outputs.version }}
+          STUDIO_SOURCE_SHA: ${{ needs.detect.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          tag="v${STUDIO_RELEASE_VERSION}"
+          test -s 'release/windows/latest.yml'
+          test -s "release/windows/Streamplay Studio-Setup-${STUDIO_RELEASE_VERSION}-x64.exe"
+          test -s "release/macos/Streamplay Studio-${STUDIO_RELEASE_VERSION}-Apple-Silicon.dmg"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $tag already exists; refusing to replace it." >&2
+            exit 1
+          fi
+          shopt -s nullglob
+          assets=(release/windows/*.exe release/windows/latest.yml release/windows/*.blockmap release/macos/*.dmg)
+          gh release create "$tag" "${assets[@]}" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Streamplay Studio $tag" \
+            --notes "Source commit: ${STUDIO_SOURCE_SHA}
+
+          Windows x64: automatic download, then Restart And Install.
+          macOS Apple Silicon: unsigned DMG for manual download and installation."
