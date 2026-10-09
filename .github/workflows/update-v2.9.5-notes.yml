@@ -17,27 +17,15 @@ jobs:
         run: |
           set -euo pipefail
           cat > release-notes.md <<'EOF'
-          # Streamplay Studio v2.9.5
+          Streamplay Studio 是面向 TikTok LIVE 团播与互动直播的桌面管理工具，用于集中管理直播流程、礼物与积分、PK 互动、画面叠加及直播状态。
 
-          Download the installer for your operating system below.
+          ## 下载与安装
 
-          ## Downloads
-          | Platform | Installer | Instructions |
+          | 系统 | 安装包 | 安装方式 |
           | --- | --- | --- |
-          | Windows (x64) | `Streamplay.Studio-Setup-2.9.5-x64.exe` | Download the EXE and run the installer. |
-          | macOS (Apple Silicon) | `Streamplay.Studio-2.9.5-Apple-Silicon.dmg` | Open the DMG and follow the installation instructions. |
+          | Windows 64 位 | `Streamplay.Studio-Setup-2.9.5-x64.exe` | 下载后双击运行安装程序。 |
+          | macOS（Apple Silicon） | `Streamplay.Studio-2.9.5-Apple-Silicon.dmg` | 打开 DMG，将应用拖入“应用程序”。 |
 
-          **Compatibility:** The macOS installer is for Apple Silicon (M-series) Macs only. An Intel Mac installer is not included in this release.
-
-          ---
-
-          ## 中文说明
-
-          **Streamplay Studio v2.9.5** 同时提供 Windows 和 macOS 安装包，请按设备系统选择：
-
-          - **Windows 64 位：** 下载 `Streamplay.Studio-Setup-2.9.5-x64.exe`，运行安装程序。
-          - **macOS（Apple Silicon）：** 下载 `Streamplay.Studio-2.9.5-Apple-Silicon.dmg`，打开磁盘映像并按提示安装。
-
-          **注意：** 当前提供的 Mac 安装包仅适用于 Apple Silicon（M 系列芯片），本版本暂未提供 Intel Mac 安装包。
+          > macOS 安装包仅适用于 Apple Silicon（M1、M2、M3、M4 系列）；本版本暂未提供 Intel Mac 安装包。
           EOF
           gh release edit v2.9.5 --repo "$GITHUB_REPOSITORY" --notes-file release-notes.md
