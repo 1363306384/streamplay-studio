@@ -1,0 +1,43 @@
+name: Update v2.9.5 release description
+on:
+  push:
+    paths:
+      - '.github/workflows/update-v2.9.5-notes.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update existing release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > release-notes.md <<'EOF'
+          # Streamplay Studio v2.9.5
+
+          Download the installer for your operating system below.
+
+          ## Downloads
+          | Platform | Installer | Instructions |
+          | --- | --- | --- |
+          | Windows (x64) | `Streamplay.Studio-Setup-2.9.5-x64.exe` | Download the EXE and run the installer. |
+          | macOS (Apple Silicon) | `Streamplay.Studio-2.9.5-Apple-Silicon.dmg` | Open the DMG and follow the installation instructions. |
+
+          **Compatibility:** The macOS installer is for Apple Silicon (M-series) Macs only. An Intel Mac installer is not included in this release.
+
+          ---
+
+          ## 中文说明
+
+          **Streamplay Studio v2.9.5** 同时提供 Windows 和 macOS 安装包，请按设备系统选择：
+
+          - **Windows 64 位：** 下载 `Streamplay.Studio-Setup-2.9.5-x64.exe`，运行安装程序。
+          - **macOS（Apple Silicon）：** 下载 `Streamplay.Studio-2.9.5-Apple-Silicon.dmg`，打开磁盘映像并按提示安装。
+
+          **注意：** 当前提供的 Mac 安装包仅适用于 Apple Silicon（M 系列芯片），本版本暂未提供 Intel Mac 安装包。
+          EOF
+          gh release edit v2.9.5 --repo "$GITHUB_REPOSITORY" --notes-file release-notes.md
