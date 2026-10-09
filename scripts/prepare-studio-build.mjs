@@ -26,7 +26,7 @@ if (matches.length !== 1) {
 }
 writeFileSync(
   backendConfigPath,
-  backendConfig.replace(backendUrlSetting, "const STUDIO_BACKEND_URL = 'https://streamplay.devkit.sh';")
+  backendConfig.replace(backendUrlSetting, "const STUDIO_BACKEND_URL = 'https://api.the3.tv';")
 );
 
 // The source repository intentionally ignores .env. The packaged app uses its

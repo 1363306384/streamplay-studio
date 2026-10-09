@@ -31,7 +31,7 @@ The v2.9.5 installers predate this workflow. Existing installed apps still check
 
 Both workflows check out a committed source ref from the private Studio repository. They do not include uncommitted files from a developer's computer, and this public release repository does not contain Studio source. The source repository ignores `.env`, so the workflow creates an empty `.env` solely to satisfy electron-builder's bundled resource entry. Do not put credentials into an installer: bundled resources are readable by recipients.
 
-Before packaging, `scripts/prepare-studio-build.mjs` sets the Studio backend to `https://streamplay.devkit.sh` and points Windows updates to this GitHub Releases repository. If the source backend config no longer has the expected single active setting, the workflow fails for review instead of silently shipping a local development URL. Other application code and settings come from the selected source commit. Runtime `.env` files on a user's computer may still supply optional settings, but they do not change the backend URL hardcoded into this build.
+Before packaging, `scripts/prepare-studio-build.mjs` sets the Studio backend to `https://api.the3.tv` and points Windows updates to this GitHub Releases repository. If the source backend config no longer has the expected single active setting, the workflow fails for review instead of silently shipping a local development URL. Other application code and settings come from the selected source commit. Runtime `.env` files on a user's computer may still supply optional settings, but they do not change the backend URL hardcoded into this build.
 
 ## Publish an unsigned macOS DMG
 
