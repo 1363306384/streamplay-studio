@@ -1,0 +1,30 @@
+name: Publish Streamplay Studio v2.9.5
+on:
+  push:
+    paths:
+      - '.github/workflows/publish-v2.9.5.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch existing verified installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 4 --retry-delay 3 -o old-release.zip 'https://github.com/1363306384/tiktok/releases/download/v2.9.5/Streamplay.Studio-Setup-2.9.5-x64.exe.zip'
+          unzip -j old-release.zip 'Streamplay Studio-Setup-2.9.5-x64.exe'
+          echo 'fdf9172d43214b2381bc05c07c7b289521a36405893750002efbdd7770419b6e  Streamplay Studio-Setup-2.9.5-x64.exe' | sha256sum --check
+      - name: Publish standalone release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v2.9.5 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload v2.9.5 'Streamplay Studio-Setup-2.9.5-x64.exe' --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create v2.9.5 'Streamplay Studio-Setup-2.9.5-x64.exe' --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title 'Streamplay Studio v2.9.5' --notes 'Windows x64 installer. Download the EXE file below and run it to install Streamplay Studio.'
+          fi
