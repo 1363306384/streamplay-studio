@@ -27,6 +27,12 @@ To publish, first increase the `version` in the private Studio source repository
 
 The v2.9.5 installers predate this workflow. Existing installed apps still check their original update server. Install a new GitHub-backed version once to switch them to this Releases feed; later versions can update through the app's **Restart And Install** button.
 
+### Build configuration
+
+Both workflows check out a committed source ref from the private Studio repository. They do not include uncommitted files from a developer's computer, and this public release repository does not contain Studio source. The source repository ignores `.env`, so the workflow creates an empty `.env` solely to satisfy electron-builder's bundled resource entry. Do not put credentials into an installer: bundled resources are readable by recipients.
+
+Before packaging, `scripts/prepare-studio-build.mjs` sets the Studio backend to `https://streamplay.devkit.sh` and points Windows updates to this GitHub Releases repository. If the source backend config no longer has the expected single active setting, the workflow fails for review instead of silently shipping a local development URL. Other application code and settings come from the selected source commit. Runtime `.env` files on a user's computer may still supply optional settings, but they do not change the backend URL hardcoded into this build.
+
 ## Publish an unsigned macOS DMG
 
 Without an Apple Developer signing certificate, the [Build unsigned macOS installer](https://github.com/1363306384/streamplay-studio/actions/workflows/build-and-publish-macos-unsigned.yml) workflow follows the source repository's `desktop:dist:mac:local` command. It builds an Apple Silicon DMG and adds it to an existing release of the same source version. Run the Windows release workflow first to create that release. It uses the same `STUDIO_SOURCE_READ_TOKEN` secret and will not replace an existing DMG.

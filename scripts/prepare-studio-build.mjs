@@ -17,10 +17,22 @@ packageJson.build.publish = [{
 
 writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
+const backendConfigPath = join(sourceDirectory, 'src/lib/server/backend-config.ts');
+const backendConfig = readFileSync(backendConfigPath, 'utf8');
+const backendUrlSetting = /^const STUDIO_BACKEND_URL = '[^']*';$/gm;
+const matches = [...backendConfig.matchAll(backendUrlSetting)];
+if (matches.length !== 1) {
+  throw new Error('Expected exactly one active Studio backend URL. Review the source before publishing.');
+}
+writeFileSync(
+  backendConfigPath,
+  backendConfig.replace(backendUrlSetting, "const STUDIO_BACKEND_URL = 'https://streamplay.devkit.sh';")
+);
+
 // The source repository intentionally ignores .env. The packaged app uses its
 // built-in backend URL, so an empty file satisfies electron-builder's resource
 // entry without putting a production secret into a public installer.
 const envPath = join(sourceDirectory, '.env');
 if (!existsSync(envPath)) writeFileSync(envPath, '');
 
-console.log(`Prepared Streamplay Studio ${packageJson.version} for GitHub Releases updates.`);
+console.log(`Prepared Streamplay Studio ${packageJson.version} with the production backend and GitHub Releases updates.`);
