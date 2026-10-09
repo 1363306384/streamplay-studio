@@ -24,6 +24,17 @@ packageJson.build.publish = [{
 
 writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
+const studioPagePath = join(sourceDirectory, 'src/routes/+page.svelte');
+const studioPage = readFileSync(studioPagePath, 'utf8');
+const appVersionSetting = /^\s*const APP_VERSION = "[^"]*";$/gm;
+if ([...studioPage.matchAll(appVersionSetting)].length !== 1) {
+  throw new Error('Expected exactly one Studio UI version setting. Review the source before publishing.');
+}
+writeFileSync(
+  studioPagePath,
+  studioPage.replace(appVersionSetting, `\tconst APP_VERSION = "${packageJson.version}";`)
+);
+
 const backendConfigPath = join(sourceDirectory, 'src/lib/server/backend-config.ts');
 const backendConfig = readFileSync(backendConfigPath, 'utf8');
 const backendUrlSetting = /^const STUDIO_BACKEND_URL = '[^']*';$/gm;

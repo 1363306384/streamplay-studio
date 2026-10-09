@@ -35,6 +35,8 @@ Both workflows check out a committed source ref from the private Studio reposito
 
 Before packaging, `scripts/prepare-studio-build.mjs` sets the Studio backend to `https://api.the3.tv` and points Windows updates to this GitHub Releases repository. If the source backend config no longer has the expected single active setting, the workflow fails for review instead of silently shipping a local development URL. Other application code and settings come from the selected source commit. Runtime `.env` files on a user's computer may still supply optional settings, but they do not change the backend URL hardcoded into this build.
 
+The automatic release workflow sets the packaged `package.json` version and the Studio UI's `APP_VERSION` to the chosen release version. Electron's update screen reads the installed version from `app.getVersion()` and the available version from the published update metadata. The source repository's lockfile root version may be stale, but it does not control the packaged app version.
+
 ## Publish an unsigned macOS DMG
 
 Without an Apple Developer signing certificate, the [Build unsigned macOS installer](https://github.com/1363306384/streamplay-studio/actions/workflows/build-and-publish-macos-unsigned.yml) workflow follows the source repository's `desktop:dist:mac:local` command. It builds an Apple Silicon DMG and adds it to an existing release of the same source version. Run the Windows release workflow first to create that release. It uses the same `STUDIO_SOURCE_READ_TOKEN` secret and will not replace an existing DMG.
