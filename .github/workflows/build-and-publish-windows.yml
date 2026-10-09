@@ -1,0 +1,98 @@
+name: Build and publish Windows update
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Studio source branch, tag, or commit
+        required: true
+        default: beta
+
+permissions:
+  contents: write
+
+concurrency:
+  group: streamplay-windows-release
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out release workflow
+        uses: actions/checkout@v4
+
+      - name: Check out private Studio source
+        uses: actions/checkout@v4
+        with:
+          repository: hannansatopay/Three-Studios-Streaming-Platform
+          ref: ${{ inputs.source_ref }}
+          token: ${{ secrets.STUDIO_SOURCE_READ_TOKEN }}
+          path: studio-src
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: studio-src/package-lock.json
+
+      - name: Point packaged updater to this release repository
+        run: node scripts/prepare-windows-build.mjs
+
+      - name: Check release version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = node -p "require('./studio-src/package.json').version"
+          if ($LASTEXITCODE -ne 0 -or -not $version) { throw 'Could not read Studio version.' }
+          $tag = "v$version"
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) { throw "Release $tag already exists. Increase the Studio version before publishing." }
+          "STUDIO_VERSION=$version" >> $env:GITHUB_ENV
+          "STUDIO_TAG=$tag" >> $env:GITHUB_ENV
+
+      - name: Install dependencies
+        working-directory: studio-src
+        run: npm ci
+
+      - name: Build Windows x64 installer and update metadata
+        working-directory: studio-src
+        run: npm run desktop:dist:win
+
+      - name: Verify release files
+        shell: pwsh
+        run: |
+          $dir = 'studio-src/dist-electron'
+          $exe = Get-ChildItem $dir -File -Filter "Streamplay Studio-Setup-$env:STUDIO_VERSION-x64.exe"
+          $manifest = Get-Item "$dir/latest.yml" -ErrorAction Stop
+          if ($exe.Count -ne 1 -or $exe[0].Length -eq 0 -or $manifest.Length -eq 0) {
+            throw 'Installer or latest.yml is missing or empty.'
+          }
+          $metadata = Get-Content $manifest.FullName -Raw
+          if (-not $metadata.Contains($exe[0].Name)) { throw 'latest.yml does not reference the installer.' }
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $dir = 'studio-src/dist-electron'
+          $assets = @(Get-ChildItem $dir -File | Where-Object {
+            $_.Name -eq 'latest.yml' -or
+            $_.Name -eq "Streamplay Studio-Setup-$env:STUDIO_VERSION-x64.exe" -or
+            $_.Name -eq "Streamplay Studio-Setup-$env:STUDIO_VERSION-x64.exe.blockmap"
+          } | ForEach-Object { $_.FullName })
+          if ($assets.Count -lt 2) { throw 'Windows release files are missing.' }
+          gh release create $env:STUDIO_TAG @assets --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Streamplay Studio $env:STUDIO_TAG" --notes "Windows x64 installer and automatic update files."
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub Release publishing failed.' }
+
+      - name: Save build artifacts for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamplay-studio-windows-${{ github.run_number }}
+          path: studio-src/dist-electron/*
+          if-no-files-found: ignore
