@@ -71,7 +71,7 @@ jobs:
           if ($exe.Count -ne 1 -or $exe[0].Length -eq 0 -or $manifest.Length -eq 0) {
             throw 'Installer or latest.yml is missing or empty.'
           }
-          $metadata = Get-Content $manifest.FullName -Raw
+          $metadata = [uri]::UnescapeDataString((Get-Content $manifest.FullName -Raw))
           if (-not $metadata.Contains($exe[0].Name)) { throw 'latest.yml does not reference the installer.' }
 
       - name: Publish GitHub Release

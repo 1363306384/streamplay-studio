@@ -86,7 +86,8 @@ jobs:
           $dir = 'studio-src/dist-electron'
           $exe = "Streamplay Studio-Setup-$env:STUDIO_RELEASE_VERSION-x64.exe"
           if (-not (Test-Path "$dir/$exe") -or -not (Test-Path "$dir/latest.yml")) { throw 'Installer or latest.yml missing.' }
-          if (-not (Get-Content "$dir/latest.yml" -Raw).Contains($exe)) { throw 'Update metadata does not reference installer.' }
+          $metadata = [uri]::UnescapeDataString((Get-Content "$dir/latest.yml" -Raw))
+          if (-not $metadata.Contains($exe)) { throw 'Update metadata does not reference installer.' }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-release
