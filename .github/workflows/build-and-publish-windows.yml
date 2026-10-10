@@ -97,7 +97,7 @@ jobs:
           LARK_SIGNING_SECRET: ${{ secrets.LARK_SIGNING_SECRET }}
           STUDIO_TAG: ${{ env.STUDIO_TAG }}
           STUDIO_PLATFORMS: Windows x64
-        run: python3 scripts/notify-lark-release.py
+        run: python scripts/notify-lark-release.py
 
       - name: Save build artifacts for inspection
         if: always()
