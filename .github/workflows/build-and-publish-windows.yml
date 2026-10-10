@@ -25,7 +25,7 @@ jobs:
       - name: Check out private Studio source
         uses: actions/checkout@v4
         with:
-          repository: hannansatopay/Three-Studios-Streaming-Platform
+          repository: 1363306384/streamplay-studio-front
           ref: ${{ inputs.source_ref }}
           token: ${{ secrets.STUDIO_SOURCE_READ_TOKEN }}
           path: studio-src
