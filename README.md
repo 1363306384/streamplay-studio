@@ -19,7 +19,7 @@ This repository distributes releases and does not contain the application source
 
 ## Publish a Windows update
 
-The [Auto publish Studio beta](https://github.com/1363306384/streamplay-studio/actions/workflows/auto-publish-beta.yml) workflow checks the private source repository's `beta` branch every 15 minutes. When its commit changes, it builds Windows x64 and unsigned macOS Apple Silicon installers from that exact commit, then publishes both to one GitHub Release. It uses `STUDIO_SOURCE_READ_TOKEN`. If the source version is newer than the latest release, that version is used; otherwise the workflow increases the latest patch version for the release build. An unchanged commit is skipped. GitHub scheduled runs may start later than their nominal time.
+The [Publish Studio beta](https://github.com/1363306384/streamplay-studio/actions/workflows/auto-publish-beta.yml) workflow runs only when manually dispatched, including from the Streamplay Admin version page. It builds Windows x64 and unsigned macOS Apple Silicon installers from the private source repository's `beta` commit, then publishes both to one GitHub Release. It uses `STUDIO_SOURCE_READ_TOKEN`. If the source version is newer than the latest release, that version is used; otherwise the workflow increases the latest patch version for the release build. An unchanged commit is skipped.
 
 The [Build and publish Windows update](https://github.com/1363306384/streamplay-studio/actions/workflows/build-and-publish-windows.yml) workflow builds the private Studio source on a Windows runner and publishes the x64 installer, `latest.yml`, and blockmap to this repository's Releases.
 

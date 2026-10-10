@@ -1,8 +1,6 @@
-name: Auto publish Studio beta
+name: Publish Studio beta
 
 on:
-  schedule:
-    - cron: '*/15 * * * *'
   workflow_dispatch:
 
 permissions:
