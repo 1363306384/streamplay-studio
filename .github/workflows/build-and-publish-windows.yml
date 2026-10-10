@@ -60,7 +60,7 @@ jobs:
 
       - name: Build Windows x64 installer and update metadata
         working-directory: studio-src
-        run: npm run desktop:dist:win
+        run: npm run desktop:dist:win -- --publish never
 
       - name: Verify release files
         shell: pwsh

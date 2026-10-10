@@ -77,7 +77,7 @@ jobs:
         run: node scripts/prepare-studio-build.mjs
       - name: Install dependencies and build
         working-directory: studio-src
-        run: npm ci && npm run desktop:dist:win
+        run: npm ci && npm run desktop:dist:win -- --publish never
       - name: Verify Windows update assets
         shell: pwsh
         env:
@@ -117,7 +117,7 @@ jobs:
         run: node scripts/prepare-studio-build.mjs
       - name: Install dependencies and build unsigned DMG
         working-directory: studio-src
-        run: npm ci && npm run desktop:dist:mac:local
+        run: npm ci && npm run desktop:dist:mac:local -- --publish never
       - name: Verify DMG
         env:
           STUDIO_RELEASE_VERSION: ${{ needs.detect.outputs.version }}

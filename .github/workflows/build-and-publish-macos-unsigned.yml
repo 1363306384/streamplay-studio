@@ -62,7 +62,7 @@ jobs:
 
       - name: Build unsigned Apple Silicon DMG
         working-directory: studio-src
-        run: npm run desktop:dist:mac:local
+        run: npm run desktop:dist:mac:local -- --publish never
 
       - name: Verify DMG
         run: |
