@@ -41,15 +41,10 @@ writeFileSync(
 
 const backendConfigPath = join(sourceDirectory, 'src/lib/server/backend-config.ts');
 const backendConfig = readFileSync(backendConfigPath, 'utf8');
-const backendUrlSetting = /^const STUDIO_BACKEND_URL = '[^']*';$/gm;
-const matches = [...backendConfig.matchAll(backendUrlSetting)];
-if (matches.length !== 1) {
-  throw new Error('Expected exactly one active Studio backend URL. Review the source before publishing.');
+const productionBackendSetting = /const DEFAULT_STUDIO_BACKEND_URL = dev\s*\?\s*'http:\/\/localhost:5174'\s*:\s*'https:\/\/api\.the3\.tv';/g;
+if ([...backendConfig.matchAll(productionBackendSetting)].length !== 1) {
+  throw new Error('Expected the Studio production backend URL to be https://api.the3.tv. Review the source before publishing.');
 }
-writeFileSync(
-  backendConfigPath,
-  backendConfig.replace(backendUrlSetting, "const STUDIO_BACKEND_URL = 'https://api.the3.tv';")
-);
 
 // The source repository intentionally ignores .env. The packaged app uses its
 // built-in backend URL, so an empty file satisfies electron-builder's resource
