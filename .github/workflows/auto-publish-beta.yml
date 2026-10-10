@@ -174,7 +174,7 @@ jobs:
         env:
           LARK_WEBHOOK_URL: ${{ secrets.LARK_WEBHOOK_URL }}
           LARK_SIGNING_SECRET: ${{ secrets.LARK_SIGNING_SECRET }}
-          STUDIO_TAG: ${{ needs.detect.outputs.version }}
+          STUDIO_TAG: v${{ needs.detect.outputs.version }}
           STUDIO_PLATFORMS: Windows x64、macOS Apple Silicon
         run: python3 scripts/notify-lark-release.py
 
