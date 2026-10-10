@@ -49,8 +49,10 @@ jobs:
           $version = node -p "require('./studio-src/package.json').version"
           if ($LASTEXITCODE -ne 0 -or -not $version) { throw 'Could not read Studio version.' }
           $tag = "v$version"
-          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
-          if ($LASTEXITCODE -eq 0) { throw "Release $tag already exists. Increase the Studio version before publishing." }
+          $releaseJson = gh release list --repo $env:GITHUB_REPOSITORY --limit 1000 --json tagName
+          if ($LASTEXITCODE -ne 0) { throw 'Could not list existing releases.' }
+          $releases = $releaseJson | ConvertFrom-Json
+          if ($releases.tagName -contains $tag) { throw "Release $tag already exists. Increase the Studio version before publishing." }
           "STUDIO_VERSION=$version" >> $env:GITHUB_ENV
           "STUDIO_TAG=$tag" >> $env:GITHUB_ENV
 
