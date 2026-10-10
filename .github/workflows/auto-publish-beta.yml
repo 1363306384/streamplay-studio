@@ -84,9 +84,8 @@ jobs:
           STUDIO_RELEASE_VERSION: ${{ needs.detect.outputs.version }}
         run: |
           $dir = 'studio-src/dist-electron'
-          $exe = "Streamplay Studio-Setup-$env:STUDIO_RELEASE_VERSION-x64.exe"
+          $exe = "Streamplay-Studio-Setup-$env:STUDIO_RELEASE_VERSION-x64.exe"
           if (-not (Test-Path "$dir/$exe") -or -not (Test-Path "$dir/latest.yml")) { throw 'Installer or latest.yml missing.' }
-          Get-Content "$dir/latest.yml" | Where-Object { $_ -match '^\s*(version|path|url):' } | ForEach-Object { Write-Host "Update metadata: $_" }
           $metadata = [uri]::UnescapeDataString((Get-Content "$dir/latest.yml" -Raw))
           if (-not $metadata.Contains($exe)) { throw 'Update metadata does not reference installer.' }
       - uses: actions/upload-artifact@v4
@@ -156,7 +155,7 @@ jobs:
           set -euo pipefail
           tag="v${STUDIO_RELEASE_VERSION}"
           test -s 'release/windows/latest.yml'
-          test -s "release/windows/Streamplay Studio-Setup-${STUDIO_RELEASE_VERSION}-x64.exe"
+          test -s "release/windows/Streamplay-Studio-Setup-${STUDIO_RELEASE_VERSION}-x64.exe"
           test -s "release/macos/Streamplay Studio-${STUDIO_RELEASE_VERSION}-Apple-Silicon.dmg"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Release $tag already exists; refusing to replace it." >&2

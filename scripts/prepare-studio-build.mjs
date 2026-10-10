@@ -21,6 +21,10 @@ packageJson.build.publish = [{
   owner: '1363306384',
   repo: 'streamplay-studio'
 }];
+packageJson.build.win = {
+  ...packageJson.build.win,
+  artifactName: 'Streamplay-Studio-Setup-${version}-${arch}.${ext}'
+};
 
 writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
