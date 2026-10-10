@@ -170,6 +170,7 @@ jobs:
             --notes "Source commit: ${STUDIO_SOURCE_SHA}
 
           Windows x64: automatic download, then Restart And Install.
+          macOS Apple Silicon: unsigned DMG for manual download and installation."
       - name: Notify Lark after release
         env:
           LARK_WEBHOOK_URL: ${{ secrets.LARK_WEBHOOK_URL }}
@@ -177,5 +178,3 @@ jobs:
           STUDIO_TAG: v${{ needs.detect.outputs.version }}
           STUDIO_PLATFORMS: Windows x64、macOS Apple Silicon
         run: python3 scripts/notify-lark-release.py
-
-          macOS Apple Silicon: unsigned DMG for manual download and installation."
