@@ -34,20 +34,23 @@ jobs:
           set -euo pipefail
           source_sha="$(git rev-parse HEAD)"
           echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
-          release_json="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName,body)"
-          previous_sha="$(node -e 'const d=JSON.parse(process.argv[1]); console.log(d.body.match(/Source commit: ([a-f0-9]{40})/)?.[1] ?? "")' "$release_json")"
-          if [[ "$source_sha" == "$previous_sha" ]]; then
-            echo 'changed=false' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
           source_version="$(node -p 'require("./package.json").version')"
-          latest_version="$(node -e 'console.log(JSON.parse(process.argv[1]).tagName.replace(/^v/, ""))' "$release_json")"
-          next_version="$(node -e '
-            const parse = (v) => { if (!/^\d+\.\d+\.\d+$/.test(v)) throw new Error(`Unsupported version: ${v}`); return v.split(".").map(Number); };
-            const source = parse(process.argv[1]); const latest = parse(process.argv[2]);
-            const newer = source.findIndex((part, i) => part !== latest[i]);
-            console.log(newer >= 0 && source[newer] > latest[newer] ? source.join(".") : `${latest[0]}.${latest[1]}.${latest[2] + 1}`);
-          ' "$source_version" "$latest_version")"
+          if release_json="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName,body 2>/dev/null)"; then
+            previous_sha="$(node -e 'const d=JSON.parse(process.argv[1]); console.log(d.body.match(/Source commit: ([a-f0-9]{40})/)?.[1] ?? "")' "$release_json")"
+            if [[ "$source_sha" == "$previous_sha" ]]; then
+              echo 'changed=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            latest_version="$(node -e 'console.log(JSON.parse(process.argv[1]).tagName.replace(/^v/, ""))' "$release_json")"
+            next_version="$(node -e '
+              const parse = (v) => { if (!/^\d+\.\d+\.\d+$/.test(v)) throw new Error(`Unsupported version: ${v}`); return v.split(".").map(Number); };
+              const source = parse(process.argv[1]); const latest = parse(process.argv[2]);
+              const newer = source.findIndex((part, i) => part !== latest[i]);
+              console.log(newer >= 0 && source[newer] > latest[newer] ? source.join(".") : `${latest[0]}.${latest[1]}.${latest[2] + 1}`);
+            ' "$source_version" "$latest_version")"
+          else
+            next_version="$source_version"
+          fi
           echo "version=$next_version" >> "$GITHUB_OUTPUT"
           echo 'changed=true' >> "$GITHUB_OUTPUT"
 
