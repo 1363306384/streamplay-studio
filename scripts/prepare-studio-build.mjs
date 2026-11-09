@@ -41,7 +41,7 @@ writeFileSync(
 
 const backendConfigPath = join(sourceDirectory, 'src/lib/server/backend-config.ts');
 const backendConfig = readFileSync(backendConfigPath, 'utf8');
-const productionBackendSetting = /const DEFAULT_STUDIO_BACKEND_URL = dev\s*\?\s*'http:\/\/localhost:5174'\s*:\s*'https:\/\/api\.the3\.tv';/g;
+const productionBackendSetting = /const DEFAULT_STUDIO_BACKEND_URL = dev\s*\?\s*'(?:http:\/\/localhost:5174|https:\/\/api\.the3\.tv)'\s*:\s*'https:\/\/api\.the3\.tv';/g;
 if ([...backendConfig.matchAll(productionBackendSetting)].length !== 1) {
   throw new Error('Expected the Studio production backend URL to be https://api.the3.tv. Review the source before publishing.');
 }
